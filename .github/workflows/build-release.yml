@@ -1,0 +1,36 @@
+name: Build Release
+on: workflow_dispatch
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-encryption-key: ${{ secrets.CACHE_ENCRYPTION_KEY }}
+
+      - name: Run
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+        run: |
+          printf "%s" "$RELEASE_KEYSTORE_BASE64" | base64 -d > app/release.jks
+
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: aninspector-release
+          path: app/build/outputs/apk/release/app-release.apk
