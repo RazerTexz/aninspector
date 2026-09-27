@@ -20,10 +20,10 @@ Requires **JDK 21+**. Output is saved to `app/build/outputs/apk/debug/app-debug.
 
 ### Windows
 ```powershell
-.\gradlew.bat assembleDebug
+.\gradlew.bat :app:assembleDebug
 ```
 
 ### Linux / macOS
 ```bash
-./gradlew assembleDebug
+./gradlew :app:assembleDebug
 ```
