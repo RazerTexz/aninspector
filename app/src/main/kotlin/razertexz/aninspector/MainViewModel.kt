@@ -20,35 +20,54 @@ import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class MainViewModel(private val application: Application) : AndroidViewModel(application) {
-    var apps by mutableStateOf<List<App>>(emptyList())
+class MainViewModel(private val app: Application) : AndroidViewModel(app) {
+    private var installedPackages = listOf<Package>()
+
+    var packages by mutableStateOf<List<Package>>(emptyList())
+        private set
+    var searchQuery by mutableStateOf("")
+        private set
 
     init {
-        loadApps()
+        loadPackages()
     }
 
-    fun loadApps() {
+    fun loadPackages() {
         viewModelScope.launch(Dispatchers.IO) {
-            apps = application.packageManager.getInstalledApplications(0).map {
-                App(
+            installedPackages = app.packageManager.getInstalledApplications(0).map {
+                Package(
                     packageName = it.packageName,
-                    label = it.loadLabel(application.packageManager).toString(),
-                    icon = it.loadIcon(application.packageManager).toBitmap().asImageBitmap()
+                    label = it.loadLabel(app.packageManager).toString(),
+                    icon = it.loadIcon(app.packageManager).toBitmap().asImageBitmap()
                 )
             }.sortedBy { it.label.lowercase() }
+            packages = installedPackages
+        }
+    }
+
+    fun search(query: String) {
+        searchQuery = query
+        packages = if (query.isBlank()) {
+            installedPackages
+        } else {
+            installedPackages.filter {
+                it.label.contains(query, ignoreCase = true) || it.packageName.contains(query, ignoreCase = true)
+            }
         }
     }
 
 
-    var selectedApp by mutableStateOf<SelectedApp?>(null)
-    fun openDetails(app: App) {
+    var selectedPackage by mutableStateOf<SelectedPackage?>(null)
+        private set
+
+    fun openDetails(pkg: Package) {
         viewModelScope.launch(Dispatchers.IO) {
-            val pkgInfo = application.packageManager.getPackageInfo(app.packageName, PackageManager.GET_PERMISSIONS or PackageManager.GET_ACTIVITIES)
+            val pkgInfo = app.packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_PERMISSIONS or PackageManager.GET_ACTIVITIES)
             val appInfo = pkgInfo.applicationInfo
 
-            selectedApp = SelectedApp(
-                packageName = app.packageName,
-                label = app.label,
+            selectedPackage = SelectedPackage(
+                packageName = pkg.packageName,
+                label = pkg.label,
 
                 versionName = pkgInfo.versionName ?: "N/A",
                 versionCode = pkgInfo.longVersionCode,
@@ -62,30 +81,30 @@ class MainViewModel(private val application: Application) : AndroidViewModel(app
                 permissions = pkgInfo.requestedPermissions?.sorted() ?: emptyList(),
                 activities = pkgInfo.activities?.sortedBy { it.name } ?: emptyList(),
 
-                icon = app.icon
+                icon = pkg.icon
             )
         }
     }
 
     fun closeDetails() {
-        selectedApp = null
+        selectedPackage = null
     }
 
     private fun ApplicationInfo.formattedSize(): String {
         val baseBytes = sourceDir?.let { File(it).length() } ?: 0L
         val splitBytes = splitSourceDirs?.sumOf { File(it).length() } ?: 0L
 
-        return Formatter.formatFileSize(application, baseBytes + splitBytes)
+        return Formatter.formatFileSize(app, baseBytes + splitBytes)
     }
 }
 
-data class App(
+data class Package(
     val packageName: String,
     val label: String,
     val icon: ImageBitmap
 )
 
-data class SelectedApp(
+data class SelectedPackage(
     val packageName: String,
     val label: String,
 

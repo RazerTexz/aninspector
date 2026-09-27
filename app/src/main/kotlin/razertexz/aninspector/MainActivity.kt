@@ -10,6 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,30 +39,17 @@ class MainActivity : ComponentActivity() {
         val vm = ViewModelProvider(this)[MainViewModel::class]
 
         setContent {
-            when (val selected = vm.selectedApp) {
-                null -> AppListScreen(vm.apps) { vm.openDetails(it) }
-                else -> AppDetailsScreen(selected) { vm.closeDetails() }
-            }
-        }
-    }
-}
+            when (val selected = vm.selectedPackage) {
+                null -> ListScreen(
+                    vm.packages,
+                    searchQuery = vm.searchQuery,
+                    onSearch = { vm.search(it) }
+                ) {
+                    vm.openDetails(it)
+                }
 
-@Composable
-private fun AppListScreen(apps: List<App>, onSelect: (App) -> Unit) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().background(bgColor).padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(apps, key = { it.packageName }) { app ->
-            Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)).background(surfaceColor).clickable { onSelect(app) }.padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(bitmap = app.icon, contentDescription = null, modifier = Modifier.size(40.dp))
-                Column {
-                    BasicText(app.label, style = titleStyle)
-                    BasicText(app.packageName, style = monoStyle)
+                else -> DetailsScreen(selected) {
+                    vm.closeDetails()
                 }
             }
         }
@@ -68,10 +57,56 @@ private fun AppListScreen(apps: List<App>, onSelect: (App) -> Unit) {
 }
 
 @Composable
-private fun AppDetailsScreen(app: SelectedApp, onBack: () -> Unit) {
+private fun ListScreen(packages: List<Package>, searchQuery: String, onSearch: (String) -> Unit, onSelect: (Package) -> Unit) {
+    BackHandler(enabled = searchQuery.isNotEmpty()) {
+        onSearch("")
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize().background(backgroundColor).padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        BasicTextField(
+            searchQuery, onSearch,
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(containerColor).padding(12.dp),
+            textStyle = titleStyle,
+            singleLine = true,
+            cursorBrush = SolidColor(Color.White),
+        ) { innerTextField ->
+            if (searchQuery.isEmpty()) {
+                BasicText("Search packages...", style = secondaryStyle)
+            }
+
+            innerTextField()
+        }
+
+        BasicText("PACKAGES (${packages.size})", style = titleStyle)
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(packages, key = { it.packageName }) { pkg ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)).background(surfaceColor).clickable { onSelect(pkg) }.padding(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(bitmap = pkg.icon, contentDescription = null, modifier = Modifier.size(40.dp))
+                    Column {
+                        BasicText(pkg.label, style = titleStyle)
+                        BasicText(pkg.packageName, style = monoStyle)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailsScreen(selectedPackage: SelectedPackage, onBack: () -> Unit) {
     BackHandler(onBack = onBack)
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(bgColor).padding(8.dp),
+        modifier = Modifier.fillMaxSize().background(backgroundColor).padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {
@@ -80,47 +115,49 @@ private fun AppDetailsScreen(app: SelectedApp, onBack: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(bitmap = app.icon, contentDescription = null, modifier = Modifier.size(48.dp))
+                Image(bitmap = selectedPackage.icon, contentDescription = null, modifier = Modifier.size(48.dp))
                 Column {
-                    BasicText(app.label, style = titleStyle)
-                    BasicText(app.packageName, style = monoStyle)
+                    BasicText(selectedPackage.label, style = titleStyle)
+                    BasicText(selectedPackage.packageName, style = monoStyle)
                 }
             }
         }
 
         item {
             Column {
-                BasicText("Version:     ${app.versionName} (${app.versionCode})", style = monoStyle)
-                BasicText("Target SDK:  ${app.targetSdk.toAndroidVersion()} (${app.targetSdk})", style = monoStyle)
-                BasicText("Minimum SDK: ${app.minSdk.toAndroidVersion()} (${app.minSdk})", style = monoStyle)
-                BasicText("Size:        ${app.size}", style = monoStyle)
-                BasicText("User ID:     ${app.userId}", style = monoStyle)
+                BasicText("Version:     ${selectedPackage.versionName} (${selectedPackage.versionCode})", style = monoStyle)
+                BasicText("Target SDK:  ${selectedPackage.targetSdk.toAndroidVersion()} (${selectedPackage.targetSdk})", style = monoStyle)
+                BasicText("Minimum SDK: ${selectedPackage.minSdk.toAndroidVersion()} (${selectedPackage.minSdk})", style = monoStyle)
+                BasicText("Size:        ${selectedPackage.size}", style = monoStyle)
+                BasicText("User ID:     ${selectedPackage.userId}", style = monoStyle)
             }
         }
 
         item {
-            BasicText("PERMISSIONS (${app.permissions.size})", modifier = Modifier.padding(top = 8.dp), style = titleStyle)
+            BasicText("PERMISSIONS (${selectedPackage.permissions.size})", modifier = Modifier.padding(top = 8.dp), style = titleStyle)
         }
 
-        items(app.permissions, key = { it }) {
+        items(selectedPackage.permissions, key = { it }) {
             BasicText(it.removePrefix("android.permission."), modifier = Modifier.padding(start = 8.dp), style = monoStyle)
         }
 
         item {
-            BasicText("ACTIVITIES (${app.activities.size})", modifier = Modifier.padding(top = 8.dp), style = titleStyle)
+            BasicText("ACTIVITIES (${selectedPackage.activities.size})", modifier = Modifier.padding(top = 8.dp), style = titleStyle)
         }
 
-        items(app.activities, key = { it.name }) {
-            BasicText("${it.name.removePrefix(app.packageName)}${if (it.exported) " [Exported]" else ""}", modifier = Modifier.padding(start = 8.dp), style = monoStyle)
+        items(selectedPackage.activities, key = { it.name }) {
+            BasicText("${it.name.removePrefix(selectedPackage.packageName)}${if (it.exported) " [Exported]" else ""}", modifier = Modifier.padding(start = 8.dp), style = monoStyle)
         }
     }
 }
 
-private val bgColor = Color(0xFF121212)
+private val backgroundColor = Color(0xFF121212)
 private val surfaceColor = Color(0xFF1E1E1E)
+private val containerColor = Color(0xFF2C2C2C)
 
 private val titleStyle = TextStyle(color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-private val monoStyle = TextStyle(color = Color.Gray, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+private val secondaryStyle = TextStyle(color = Color(0xFFA0A0A0), fontSize = 16.sp)
+private val monoStyle = TextStyle(color = Color(0xFFA0A0A0), fontSize = 12.sp, fontFamily = FontFamily.Monospace)
 
 private fun Int.toAndroidVersion(): String = when {
     this >= 33 -> "Android ${this - 20}"
