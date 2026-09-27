@@ -19,13 +19,15 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.CACHE_ENCRYPTION_KEY }}
 
-      - name: Run
+      - name: Set up keystore
         env:
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: printf "%s" "$RELEASE_KEYSTORE_BASE64" | base64 -d > app/release.jks
+
+      - name: Build
+        env:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
         run: |
-          printf "%s" "$RELEASE_KEYSTORE_BASE64" | base64 -d > app/release.jks
-
           chmod +x gradlew
           ./gradlew assembleRelease
 
