@@ -10,8 +10,8 @@ android {
     defaultConfig {
         minSdk = 28
         targetSdk = 37
-        versionCode = 101
-        versionName = "1.0.1"
+        versionCode = 110
+        versionName = "1.1.0"
     }
 
     signingConfigs {
