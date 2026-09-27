@@ -1,0 +1,8 @@
+A minimalist Android package inspector built with Kotlin and Jetpack Compose.
+
+**View installed package details:**
+
+- Target and minimum SDK
+- Version name and code
+- Size and user ID
+- Permissions and activities
