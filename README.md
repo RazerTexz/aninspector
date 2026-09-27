@@ -16,14 +16,14 @@ A minimalist Android package inspector built with Kotlin and Jetpack Compose.
 </table>
 
 ## Building
-Requires JDK 21.
+Requires **JDK 21+**. Output is saved to `app/build/outputs/apk/debug/app-debug.apk`.
 
 ### Windows
-```cmd
-.\gradlew assembleDebug & rem Output: app/build/outputs/apk/debug/app-debug.apk
+```powershell
+.\gradlew.bat assembleDebug
 ```
 
 ### Linux / macOS
 ```bash
-./gradlew assembleDebug # Output: app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleDebug
 ```
