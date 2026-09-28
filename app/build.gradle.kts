@@ -16,7 +16,7 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = System.getenv("RELEASE_KEYSTORE_PASSWORD")?.let { file("release.jks") }
+            storeFile = file("release.jks")
             storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
 
             keyAlias = "release"
@@ -26,7 +26,9 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            if (System.getenv("RELEASE_KEYSTORE_PASSWORD") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
 
             isMinifyEnabled = true
             isShrinkResources = true
