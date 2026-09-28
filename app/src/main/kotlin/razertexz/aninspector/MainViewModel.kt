@@ -60,33 +60,32 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
     var selectedPackage by mutableStateOf<SelectedPackage?>(null)
         private set
 
-    fun openDetails(pkg: Package) {
+    fun select(pkg: Package) {
         viewModelScope.launch(Dispatchers.IO) {
-            val pkgInfo = app.packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_PERMISSIONS or PackageManager.GET_ACTIVITIES)
-            val appInfo = pkgInfo.applicationInfo
+            try {
+                val pkgInfo = app.packageManager.getPackageInfo(pkg.packageName, PackageManager.GET_PERMISSIONS or PackageManager.GET_ACTIVITIES)
+                val appInfo = pkgInfo.applicationInfo
 
-            selectedPackage = SelectedPackage(
-                packageName = pkg.packageName,
-                label = pkg.label,
-
-                versionName = pkgInfo.versionName ?: "N/A",
-                versionCode = pkgInfo.longVersionCode,
-
-                targetSdk = appInfo?.targetSdkVersion ?: 0,
-                minSdk = appInfo?.minSdkVersion ?: 0,
-
-                size = appInfo?.formattedSize() ?: "N/A",
-                userId = appInfo?.uid ?: 0,
-
-                permissions = pkgInfo.requestedPermissions?.sorted() ?: emptyList(),
-                activities = pkgInfo.activities?.sortedBy { it.name } ?: emptyList(),
-
-                icon = pkg.icon
-            )
+                selectedPackage = SelectedPackage(
+                    packageName = pkg.packageName,
+                    label = pkg.label,
+                    versionName = pkgInfo.versionName ?: "N/A",
+                    versionCode = pkgInfo.longVersionCode,
+                    targetSdk = appInfo?.targetSdkVersion ?: 0,
+                    minSdk = appInfo?.minSdkVersion ?: 0,
+                    size = appInfo?.formattedSize() ?: "N/A",
+                    userId = appInfo?.uid ?: 0,
+                    permissions = pkgInfo.requestedPermissions?.sorted() ?: emptyList(),
+                    activities = pkgInfo.activities?.sortedBy { it.name } ?: emptyList(),
+                    icon = pkg.icon
+                )
+            } catch (e: PackageManager.NameNotFoundException) {
+                loadPackages()
+            }
         }
     }
 
-    fun closeDetails() {
+    fun deselect() {
         selectedPackage = null
     }
 
@@ -107,18 +106,13 @@ data class Package(
 data class SelectedPackage(
     val packageName: String,
     val label: String,
-
     val versionName: String,
     val versionCode: Long,
-
     val targetSdk: Int,
     val minSdk: Int,
-
     val size: String,
     val userId: Int,
-
     val permissions: List<String>,
     val activities: List<ActivityInfo>,
-
     val icon: ImageBitmap
 )

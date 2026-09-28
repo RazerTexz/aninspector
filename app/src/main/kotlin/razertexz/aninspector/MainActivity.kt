@@ -39,17 +39,12 @@ class MainActivity : ComponentActivity() {
         val vm = ViewModelProvider(this)[MainViewModel::class]
 
         setContent {
-            when (val selected = vm.selectedPackage) {
-                null -> ListScreen(
-                    vm.packages,
-                    searchQuery = vm.searchQuery,
-                    onSearch = { vm.search(it) }
-                ) {
-                    vm.openDetails(it)
+            when (val sel = vm.selectedPackage) {
+                null -> ListScreen(vm.packages, searchQuery = vm.searchQuery, onSearch = { vm.search(it) }) {
+                    vm.select(it)
                 }
-
-                else -> DetailsScreen(selected) {
-                    vm.closeDetails()
+                else -> DetailsScreen(sel) {
+                    vm.deselect()
                 }
             }
         }
@@ -72,12 +67,12 @@ private fun ListScreen(packages: List<Package>, searchQuery: String, onSearch: (
             textStyle = titleStyle,
             singleLine = true,
             cursorBrush = SolidColor(Color.White),
-        ) { innerTextField ->
+        ) {
             if (searchQuery.isEmpty()) {
                 BasicText("Search packages...", style = secondaryStyle)
             }
 
-            innerTextField()
+            it()
         }
 
         BasicText("PACKAGES (${packages.size})", style = titleStyle)
