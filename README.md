@@ -1,5 +1,9 @@
 # AnInspector
+[![RB Status](https://shields.rbtlog.dev/simple/razertexz.aninspector?style=for-the-badge)](https://shields.rbtlog.dev/razertexz.aninspector)
+
 A minimalist Android package inspector built with Kotlin and Jetpack Compose.
+
+[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="80" alt="Get it on IzzyOnDroid">](https://apt.izzysoft.de/packages/razertexz.aninspector)
 
 **View installed package details:**
 
