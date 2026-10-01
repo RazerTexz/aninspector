@@ -34,5 +34,5 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v7
         with:
-          name: aninspector-release
+          name: app-release
           path: app/build/outputs/apk/release/app-release.apk
