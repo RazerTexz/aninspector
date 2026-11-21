@@ -1,9 +1,8 @@
 name: Build Release
 on: workflow_dispatch
-
 jobs:
   build-release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -27,12 +26,10 @@ jobs:
       - name: Build
         env:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-        run: |
-          chmod +x gradlew
-          ./gradlew :app:assembleRelease
+        run: sh gradlew :app:assembleRelease
 
       - name: Upload
         uses: actions/upload-artifact@v7
         with:
-          name: app-release
+          archive: false
           path: app/build/outputs/apk/release/app-release.apk
